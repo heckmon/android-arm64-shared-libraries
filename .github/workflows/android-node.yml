@@ -9,7 +9,7 @@ jobs:
   build-arm64:
     runs-on: ubuntu-latest
     env:
-      NDK_VERSION: 26.1.10909125
+      NDK_VERSION: 28.2.13676358
       API_LEVEL: 21
       DEST_CPU: arm64
 
@@ -25,7 +25,7 @@ jobs:
       - name: Download Android NDK
         run: |
           mkdir -p $HOME/android-ndk
-          curl -sL https://dl.google.com/android/repository/android-ndk-r${NDK_VERSION}-linux.zip -o ndk.zip
+          curl -sL https://dl.google.com/android/repository/android-ndk-r28c-linux.zip -o ndk.zip
           unzip ndk.zip -d $HOME/android-ndk
           echo "NDK=$HOME/android-ndk/android-ndk-r${NDK_VERSION}" >> $GITHUB_ENV
 
