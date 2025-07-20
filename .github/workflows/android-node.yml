@@ -1,0 +1,94 @@
+name: Build Node.js for Android (arm64-v8a)
+
+on: schedule: - cron: '0 4 * * 1' # every Monday workflow_dispatch:
+
+jobs: build-arm64: runs-on: ubuntu-latest env: NDK_VERSION: 26.1.10909125 API_LEVEL: 21 DEST_CPU: arm64
+
+steps:
+  - name: Checkout this repo
+    uses: actions/checkout@v3
+
+  - name: Install dependencies
+    run: |
+      sudo apt-get update
+      sudo apt-get install -y python g++ curl make git jq pkg-config unzip zip
+
+  - name: Download Android NDK
+    run: |
+      mkdir -p $HOME/android-ndk
+      curl -sL https://dl.google.com/android/repository/android-ndk-r${NDK_VERSION}-linux.zip -o ndk.zip
+      unzip ndk.zip -d $HOME/android-ndk
+      echo "NDK=$HOME/android-ndk/android-ndk-r${NDK_VERSION}" >> $GITHUB_ENV
+
+  - name: Fetch latest Node.js version
+    id: fetch_version
+    run: |
+      curl -s https://nodejs.org/dist/index.json | jq -r '.[0].version' > latest_node_version.txt
+      echo "version=$(cat latest_node_version.txt)" >> $GITHUB_OUTPUT
+
+  - name: Check if already released
+    id: release_check
+    run: |
+      VERSION=${{ steps.fetch_version.outputs.version }}
+      echo "Checking if release exists for android-node-$VERSION"
+      RELEASE_EXISTS=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/tags/android-node-$VERSION | jq -r '.id // empty')
+      if [ -n "$RELEASE_EXISTS" ]; then
+        echo "Release already exists. Skipping build."
+        echo "skip_build=true" >> $GITHUB_OUTPUT
+      else
+        echo "skip_build=false" >> $GITHUB_OUTPUT
+
+  - name: Stop if already released
+    if: steps.release_check.outputs.skip_build == 'true'
+    run: exit 0
+
+  - name: Clone Node.js source
+    run: |
+      VERSION=${{ steps.fetch_version.outputs.version }}
+      git clone https://github.com/nodejs/node.git
+      cd node
+      git checkout $VERSION
+      echo "NODE_VERSION=$VERSION" >> $GITHUB_ENV
+
+  - name: Set up Android toolchain
+    run: |
+      TOOLCHAIN=$NDK/toolchains/llvm/prebuilt/linux-x86_64
+      echo "TOOLCHAIN=$TOOLCHAIN" >> $GITHUB_ENV
+      echo "CC=$TOOLCHAIN/bin/aarch64-linux-android${API_LEVEL}-clang" >> $GITHUB_ENV
+      echo "CXX=$TOOLCHAIN/bin/aarch64-linux-android${API_LEVEL}-clang++" >> $GITHUB_ENV
+      echo "AR=$TOOLCHAIN/bin/llvm-ar" >> $GITHUB_ENV
+      echo "RANLIB=$TOOLCHAIN/bin/llvm-ranlib" >> $GITHUB_ENV
+      echo "PATH=$TOOLCHAIN/bin:$PATH" >> $GITHUB_ENV
+
+  - name: Configure Node.js
+    run: |
+      cd node
+      ./configure \
+        --dest-cpu=$DEST_CPU \
+        --dest-os=android \
+        --with-intl=full-icu \
+        --cross-compiling \
+        --shared \
+        --download=all \
+        --prefix=$GITHUB_WORKSPACE/out
+
+  - name: Build Node.js
+    run: |
+      cd node
+      make -j$(nproc)
+      make install
+
+  - name: Package Output as ZIP
+    run: |
+      cd out
+      zip -r ../node-android-${{ env.NODE_VERSION }}.zip .
+
+  - name: Upload to GitHub Release
+    uses: softprops/action-gh-release@v2
+    with:
+      tag_name: android-node-${{ env.NODE_VERSION }}
+      name: Node.js Android arm64-v8a ${{ env.NODE_VERSION }}
+      files: node-android-${{ env.NODE_VERSION }}.zip
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
