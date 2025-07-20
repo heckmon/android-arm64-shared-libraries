@@ -46,6 +46,7 @@ jobs:
             echo "skip_build=true" >> $GITHUB_OUTPUT
           else
             echo "skip_build=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Stop if already released
         if: steps.release_check.outputs.skip_build == 'true'
