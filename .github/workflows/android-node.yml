@@ -1,6 +1,6 @@
 name: Build Node.js for Android (arm64-v8a)
 
-on: schedule: - cron: '0 4 * * 1' # every Monday workflow_dispatch:
+on: schedule: - cron: '0 4 * * 1'
 
 jobs: build-arm64: runs-on: ubuntu-latest env: NDK_VERSION: 26.1.10909125 API_LEVEL: 21 DEST_CPU: arm64
 
