@@ -1,5 +1,12 @@
 name: Build Node.js for Android (arm64-v8a)
 
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '**.sh'
+      - '.github/workflows/**'
+
 jobs:
   build-arm64:
     runs-on: ubuntu-latest
