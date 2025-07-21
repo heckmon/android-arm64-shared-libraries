@@ -11,7 +11,7 @@ jobs:
   build-arm64:
     runs-on: ubuntu-latest
     env:
-      NDK_VERSION: 28.2.13676358
+      NDK_VERSION: 28c
       API_LEVEL: 35
       DEST_CPU: arm64
 
