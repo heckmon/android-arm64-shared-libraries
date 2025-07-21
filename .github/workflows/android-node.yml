@@ -91,6 +91,7 @@ jobs:
             --cross-compiling \
             --shared \
             --download=all \
+            --openssl-no-asm \
             --prefix=$GITHUB_WORKSPACE/out
 
       - name: Build Node.js
