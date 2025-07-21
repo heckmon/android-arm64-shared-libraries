@@ -14,6 +14,9 @@ jobs:
       NDK_VERSION: 28c
       API_LEVEL: 35
       DEST_CPU: arm64
+      ARCH: arm64
+      HOST_OS: "linux"
+      HOST_ARCH: "x86_64"
 
     steps:
       - name: Checkout this repo
@@ -64,26 +67,39 @@ jobs:
 
       - name: Set up Android environment variables
         run: |
+          mkdir -p $HOME/sources
           echo "NDK_HOME=$NDK" >> $GITHUB_ENV
-          echo "TOOLCHAIN=$NDK/toolchains/llvm/prebuilt/linux-x86_64" >> $GITHUB_ENV
-          echo "TARGET=aarch64-linux-android" >> $GITHUB_ENV
-          echo "API=35" >> $GITHUB_ENV
-          echo "AR=$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar" >> $GITHUB_ENV
-          echo "AS=$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-as" >> $GITHUB_ENV
-          echo "CC=$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android35-clang" >> $GITHUB_ENV
-          echo "CXX=$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android35-clang++" >> $GITHUB_ENV
-          echo "LD=$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/ld" >> $GITHUB_ENV
-          echo "RANLIB=$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ranlib" >> $GITHUB_ENV
-          echo "STRIP=$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip" >> $GITHUB_ENV
-          echo "SYSROOT=$NDK/toolchains/llvm/prebuilt/linux-x86_64/sysroot" >> $GITHUB_ENV
-          echo "CFLAGS=--sysroot=$NDK/toolchains/llvm/prebuilt/linux-x86_64/sysroot" >> $GITHUB_ENV
-          echo "LDFLAGS=--sysroot=$NDK/toolchains/llvm/prebuilt/linux-x86_64/sysroot" >> $GITHUB_ENV
-          echo "GYP_DEFINES=android_ndk_path=$NDK host_os=linux OS=android" >> $GITHUB_ENV
-          echo "$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin" >> $GITHUB_PATH
+          echo "HOST_GCC_DIR=/usr/bin" >> $GITHUB_ENV
+          echo "ENVDISTBIN=dist" >> $GITHUB_ENV
+          echo "ENVHOST=linux-x86_64" >> $GITHUB_ENV
+          echo "ENVTARGET=aarch64-linux-android" >> $GITHUB_ENV
+          echo "ENVANDROIDVER=35" >> $GITHUB_ENV
+          echo "CROSS_COMPILE=' --build=x86_64-linux --host=arm64-v8a --target=arm64-v8a '" >> $GITHUB_ENV
+          echo "COMPILERDIR=$NDK/toolchains/llvm/prebuilt/$ENVHOST/bin" >> $GITHUB_ENV
+          echo "CC=$COMPILERDIR/${ENVTARGET}${ENVANDROIDVER}-clang" >> $GITHUB_ENV
+          echo "CXX=$COMPILERDIR/${ENVTARGET}${ENVANDROIDVER}-clang++" >> $GITHUB_ENV
+          echo "LD=$COMPILERDIR/$ENVTARGET-ld" >> $GITHUB_ENV
+          echo "AS=$COMPILERDIR/$ENVTARGET-as" >> $GITHUB_ENV
+          echo "AR=$COMPILERDIR/llvm-ar" >> $GITHUB_ENV
+          echo "STRIP=$COMPILERDIR/llvm-strip" >> $GITHUB_ENV
+          echo "OBJCOPY=$COMPILERDIR/llvm-objcopy" >> $GITHUB_ENV
+          echo "OBJDUMP=$COMPILERDIR/llvm-objdump" >> $GITHUB_ENV
+          echo "RANLIB=$COMPILERDIR/llvm-ranlib" >> $GITHUB_ENV
+          echo "NM=$COMPILERDIR/llvm-nm" >> $GITHUB_ENV
+          echo "STRINGS=$COMPILERDIR/llvm-strings" >> $GITHUB_ENV
+          echo "READELF=$COMPILERDIR/llvm-readelf" >> $GITHUB_ENV
+          echo "ANDROID=$COMPILEDIR/../sysroot" >> $GITHUB_ENV
+
+          echo "CC_host=$HOST_GCC_DIR/gcc" >> $GITHUB_ENV
+          echo "CXX_host=$HOST_GCC_DIR/g++" >> $GITHUB_ENV
+          echo "AR_host=$HOST_GCC_DIR/gcc-ar" >> $GITHUB_ENV
+          echo "RANLIB_host=$HOST_GCC_DIR/gcc-ranlib" >> $GITHUB_ENV
+          echo "GYP_DEFINES=target_arch=$ARCH v8_target_arch=$ARCH android_target_arch=$ARCH host_os=$HOST_OS OS=android android_ndk_path=$NDK" >> $GITHUB_ENV
 
       - name: Configure Node.js
         run: |
           cd node
+          sed -i 's|.*-msign-return-address=all.*||' ./configure.py
           ./configure \
             --dest-cpu=$DEST_CPU \
             --dest-os=android \
@@ -97,6 +113,14 @@ jobs:
       - name: Build Node.js
         run: |
           cd node
+          grep "LD_LIBRARY_PATH=" . -r | grep -v Binary | cut -d ':' -f 1 | sort -u | xargs sed -i "s|LD_LIBRARY_PATH=|LD_LIBRARY_PATH=$HOST_GCC_DIR/dist/lib64:|g"
+          sed -i "s|// Setup for shared library export.|#undef V8_TRAP_HANDLER_VIA_SIMULATOR\n#undef V8_TRAP_HANDLER_SUPPORTED\n#define V8_TRAP_HANDLER_SUPPORTED false\n\n// Setup for shared library export.|" deps/v8/src/trap-handler/trap-handler.h
+          $CC -D__aarch64__ -c -o out/cpu-features.o $NDK/sources/android/cpufeatures/cpu-features.c
+          sed -i 's|$(obj)[.]target/deps/zlib/libzlib[.]a|$(obj).target/../../cpu-features.o $(obj).target/deps/zlib/libzlib.a|g' ./out/embedtest.target.mk
+          sed -i 's|$(obj)[.]target/deps/zlib/libzlib[.]a|$(obj).target/../../cpu-features.o $(obj).target/deps/zlib/libzlib.a|g' ./out/cctest.target.mk
+          sed -i 's|$(obj)[.]target/deps/zlib/libzlib[.]a|$(obj).target/../../cpu-features.o $(obj).target/deps/zlib/libzlib.a|g' ./out/node.target.mk
+          sed -i 's|$(obj)[.]target/deps/zlib/libzlib[.]a|$(obj).target/../../cpu-features.o $(obj).target/deps/zlib/libzlib.a|g' ./out/node_mksnapshot.target.mk
+
           make -j$(nproc)
           make install
 
