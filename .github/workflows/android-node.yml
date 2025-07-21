@@ -17,6 +17,11 @@ jobs:
       ARCH: arm64
       HOST_OS: "linux"
       HOST_ARCH: "x86_64"
+      HOST_GCC_DIR: /usr/bin
+      ENVDISTBIN: "dist"
+      ENVTARGET: aarch64-linux-android
+      ENVHOST: linux-x86_64
+      ENVANDROIDVER: 35
 
     steps:
       - name: Checkout this repo
@@ -39,6 +44,7 @@ jobs:
         run: |
           curl -s https://nodejs.org/dist/index.json | jq -r '.[0].version' > latest_node_version.txt
           echo "version=$(cat latest_node_version.txt)" >> $GITHUB_OUTPUT
+          echo "COMPILERDIR=$NDK/toolchains/llvm/prebuilt/$ENVHOST/bin" >> $GITHUB_ENV
 
       - name: Check if already released
         id: release_check
@@ -68,12 +74,6 @@ jobs:
       - name: Set up Android environment variables
         run: |
           echo "NDK_HOME=$NDK" >> $GITHUB_ENV
-          echo "HOST_GCC_DIR=/usr/bin" >> $GITHUB_ENV
-          echo "ENVDISTBIN=dist" >> $GITHUB_ENV
-          echo "ENVHOST=linux-x86_64" >> $GITHUB_ENV
-          echo "ENVTARGET=aarch64-linux-android" >> $GITHUB_ENV
-          echo "ENVANDROIDVER=35" >> $GITHUB_ENV
-          echo "COMPILERDIR=$NDK/toolchains/llvm/prebuilt/$ENVHOST/bin" >> $GITHUB_ENV
           
           # Android compilers
           echo "CC=$COMPILERDIR/${ENVTARGET}${ENVANDROIDVER}-clang" >> $GITHUB_ENV
