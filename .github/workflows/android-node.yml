@@ -67,38 +67,42 @@ jobs:
 
       - name: Set up Android environment variables
         run: |
-          mkdir -p $HOME/sources
           echo "NDK_HOME=$NDK" >> $GITHUB_ENV
           echo "HOST_GCC_DIR=/usr/bin" >> $GITHUB_ENV
           echo "ENVDISTBIN=dist" >> $GITHUB_ENV
           echo "ENVHOST=linux-x86_64" >> $GITHUB_ENV
           echo "ENVTARGET=aarch64-linux-android" >> $GITHUB_ENV
           echo "ENVANDROIDVER=35" >> $GITHUB_ENV
-          echo "CROSS_COMPILE=' --build=x86_64-linux --host=arm64-v8a --target=arm64-v8a '" >> $GITHUB_ENV
           echo "COMPILERDIR=$NDK/toolchains/llvm/prebuilt/$ENVHOST/bin" >> $GITHUB_ENV
+          
+          # Android compilers
           echo "CC=$COMPILERDIR/${ENVTARGET}${ENVANDROIDVER}-clang" >> $GITHUB_ENV
           echo "CXX=$COMPILERDIR/${ENVTARGET}${ENVANDROIDVER}-clang++" >> $GITHUB_ENV
           echo "LD=$COMPILERDIR/$ENVTARGET-ld" >> $GITHUB_ENV
           echo "AS=$COMPILERDIR/$ENVTARGET-as" >> $GITHUB_ENV
           echo "AR=$COMPILERDIR/llvm-ar" >> $GITHUB_ENV
           echo "STRIP=$COMPILERDIR/llvm-strip" >> $GITHUB_ENV
-          echo "OBJCOPY=$COMPILERDIR/llvm-objcopy" >> $GITHUB_ENV
-          echo "OBJDUMP=$COMPILERDIR/llvm-objdump" >> $GITHUB_ENV
-          echo "RANLIB=$COMPILERDIR/llvm-ranlib" >> $GITHUB_ENV
-          echo "NM=$COMPILERDIR/llvm-nm" >> $GITHUB_ENV
-          echo "STRINGS=$COMPILERDIR/llvm-strings" >> $GITHUB_ENV
-          echo "READELF=$COMPILERDIR/llvm-readelf" >> $GITHUB_ENV
-          echo "ANDROID=$COMPILEDIR/../sysroot" >> $GITHUB_ENV
-
+          
+          # Host compilers
           echo "CC_host=$HOST_GCC_DIR/gcc" >> $GITHUB_ENV
           echo "CXX_host=$HOST_GCC_DIR/g++" >> $GITHUB_ENV
-          echo "AR_host=$HOST_GCC_DIR/gcc-ar" >> $GITHUB_ENV
-          echo "RANLIB_host=$HOST_GCC_DIR/gcc-ranlib" >> $GITHUB_ENV
+          
           echo "GYP_DEFINES=target_arch=$ARCH v8_target_arch=$ARCH android_target_arch=$ARCH host_os=$HOST_OS OS=android android_ndk_path=$NDK" >> $GITHUB_ENV
+          
+          # Add NDK tools to PATH
+          echo "$COMPILERDIR" >> $GITHUB_PATH
+
+      - name: Verify Android compilers exist
+        run: |
+          ls -la $COMPILERDIR
+          $CC --version
+          $CXX --version
 
       - name: Configure Node.js
         run: |
           cd node
+          echo "Using CC: $CC"
+          echo "Using CXX: $CXX"
           sed -i 's|.*-msign-return-address=all.*||' ./configure.py
           ./configure \
             --dest-cpu=$DEST_CPU \
