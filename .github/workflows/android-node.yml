@@ -21,7 +21,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v0.0.1
-          name: Node.js Android arm64-v8a Dummy ${{ steps.make_zip.outputs.version }}
           files: dummy-release.zip
         env: 
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
