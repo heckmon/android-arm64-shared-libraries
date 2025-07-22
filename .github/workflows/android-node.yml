@@ -2,6 +2,7 @@ name: Dummy Release Test
 
 on:
   workflow_dispatch:
+  push:
 
 jobs:
   release:
@@ -22,3 +23,5 @@ jobs:
           tag_name: android-node-${{ steps.make_zip.outputs.version }}
           name: Node.js Android arm64-v8a Dummy ${{ steps.make_zip.outputs.version }}
           files: dummy-release.zip
+        env: 
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
