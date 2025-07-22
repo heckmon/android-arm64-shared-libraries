@@ -1,26 +1,139 @@
-name: Dummy Release Test
+name: Build Node.js for Android (arm64-v8a)
 
 on:
   workflow_dispatch:
   push:
+    paths:
+      - '.github/workflows/**'
 
 jobs:
-  release:
+  build-arm64:
     runs-on: ubuntu-latest
+    env:
+      NDK_VERSION: 28c
+      API_LEVEL: 35
+      DEST_CPU: arm64
+      ARCH: arm64
+      HOST_OS: "linux"
+      HOST_ARCH: "x86_64"
+      HOST_GCC_DIR: /usr/bin
+      ENVDISTBIN: "dist"
+      ENVTARGET: aarch64-linux-android
+      ENVHOST: linux-x86_64
+      ENVANDROIDVER: 35
 
     steps:
-      - name: Create Dummy ZIP
-        id: make_zip
+      - name: Checkout this repo
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
         run: |
-          mkdir dummy
-          echo "Just testing release upload." > dummy/README.txt
-          zip -r dummy-release.zip dummy
-          echo "version=test" >> $GITHUB_OUTPUT
+          sudo apt-get update
+          sudo apt-get install -y python3 g++ curl make git jq pkg-config unzip zip
+
+      - name: Download Android NDK
+        run: |
+          mkdir -p $HOME/android-ndk
+          curl -sL https://dl.google.com/android/repository/android-ndk-r28c-linux.zip -o ndk.zip
+          unzip ndk.zip -d $HOME/android-ndk
+          echo "NDK=$HOME/android-ndk/android-ndk-r${NDK_VERSION}" >> $GITHUB_ENV
+
+      - name: Fetch latest Node.js version
+        id: fetch_version
+        run: |
+          curl -s https://nodejs.org/dist/index.json | jq -r '.[0].version' > latest_node_version.txt
+          echo "version=$(cat latest_node_version.txt)" >> $GITHUB_OUTPUT
+          echo "COMPILERDIR=$NDK/toolchains/llvm/prebuilt/$ENVHOST/bin" >> $GITHUB_ENV
+
+      - name: Check if already released
+        id: release_check
+        run: |
+          VERSION=${{ steps.fetch_version.outputs.version }}
+          echo "Checking if release exists for android-node-$VERSION"
+          RELEASE_EXISTS=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/tags/android-node-$VERSION | jq -r '.id // empty')
+          if [ -n "$RELEASE_EXISTS" ]; then
+            echo "Release already exists. Skipping build."
+            echo "skip_build=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip_build=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Stop if already released
+        if: steps.release_check.outputs.skip_build == 'true'
+        run: exit 0
+
+      - name: Clone Node.js source
+        run: |
+          git clone https://github.com/nodejs/node.git
+          cd node
+          git checkout ${{ steps.fetch_version.outputs.version }}
+
+      - name: Set up Android environment variables
+        run: |
+          echo "NDK_HOME=$NDK" >> $GITHUB_ENV
+          
+          # Android compilers
+          echo "CC=$COMPILERDIR/${ENVTARGET}${ENVANDROIDVER}-clang" >> $GITHUB_ENV
+          echo "CXX=$COMPILERDIR/${ENVTARGET}${ENVANDROIDVER}-clang++" >> $GITHUB_ENV
+          echo "LD=$COMPILERDIR/$ENVTARGET-ld" >> $GITHUB_ENV
+          echo "AS=$COMPILERDIR/$ENVTARGET-as" >> $GITHUB_ENV
+          echo "AR=$COMPILERDIR/llvm-ar" >> $GITHUB_ENV
+          echo "STRIP=$COMPILERDIR/llvm-strip" >> $GITHUB_ENV
+          
+          # Host compilers
+          echo "CC_host=$HOST_GCC_DIR/gcc" >> $GITHUB_ENV
+          echo "CXX_host=$HOST_GCC_DIR/g++" >> $GITHUB_ENV
+          
+          echo "GYP_DEFINES=target_arch=$ARCH v8_target_arch=$ARCH android_target_arch=$ARCH host_os=$HOST_OS OS=android android_ndk_path=$NDK" >> $GITHUB_ENV
+          
+          # Add NDK tools to PATH
+          echo "$COMPILERDIR" >> $GITHUB_PATH
+
+      - name: Verify Android compilers exist
+        run: |
+          ls -la $COMPILERDIR
+          $CC --version
+          $CXX --version
+
+      - name: Configure Node.js
+        run: |
+          cd node
+          echo "Using CC: $CC"
+          echo "Using CXX: $CXX"
+          sed -i 's|.*-msign-return-address=all.*||' ./configure.py
+          ./configure \
+            --dest-cpu=$DEST_CPU \
+            --dest-os=android \
+            --with-intl=full-icu \
+            --cross-compiling \
+            --shared \
+            --download=all \
+            --openssl-no-asm \
+            --prefix=$GITHUB_WORKSPACE/out
+
+      - name: Build Node.js
+        run: |
+          cd node
+          grep "LD_LIBRARY_PATH=" . -r | grep -v Binary | cut -d ':' -f 1 | sort -u | xargs sed -i "s|LD_LIBRARY_PATH=|LD_LIBRARY_PATH=$HOST_GCC_DIR/dist/lib64:|g"
+          sed -i "s|// Setup for shared library export.|#undef V8_TRAP_HANDLER_VIA_SIMULATOR\n#undef V8_TRAP_HANDLER_SUPPORTED\n#define V8_TRAP_HANDLER_SUPPORTED false\n\n// Setup for shared library export.|" deps/v8/src/trap-handler/trap-handler.h
+          $CC -D__aarch64__ -c -o out/cpu-features.o $NDK/sources/android/cpufeatures/cpu-features.c
+          sed -i 's|$(obj)[.]target/deps/zlib/libzlib[.]a|$(obj).target/../../cpu-features.o $(obj).target/deps/zlib/libzlib.a|g' ./out/embedtest.target.mk
+          sed -i 's|$(obj)[.]target/deps/zlib/libzlib[.]a|$(obj).target/../../cpu-features.o $(obj).target/deps/zlib/libzlib.a|g' ./out/cctest.target.mk
+          sed -i 's|$(obj)[.]target/deps/zlib/libzlib[.]a|$(obj).target/../../cpu-features.o $(obj).target/deps/zlib/libzlib.a|g' ./out/node.target.mk
+          sed -i 's|$(obj)[.]target/deps/zlib/libzlib[.]a|$(obj).target/../../cpu-features.o $(obj).target/deps/zlib/libzlib.a|g' ./out/node_mksnapshot.target.mk
+
+          make -j$(nproc)
+          make install
+
+      - name: Package Output as ZIP
+        run: |
+          cd out
+          zip -r ../node-android-${{ steps.fetch_version.outputs.version }}.zip .
 
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v0.0.1
-          files: dummy-release.zip
-        env: 
+          files: node-android-${{ steps.fetch_version.outputs.version }}.zip
+        env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
