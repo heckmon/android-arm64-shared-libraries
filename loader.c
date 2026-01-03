@@ -453,7 +453,7 @@ int run_kotlin(int argc, char *argv[]) {
 }
 
 int run_java_tool(const char *tool, char *argv[]) {
-    const char *javaDir = "java-17-openjdk";
+    const char *javaDir = "java-21-openjdk";
 
     char fullJavaDir[512];
     snprintf(fullJavaDir, sizeof(fullJavaDir), "%s/%s", RUNTIME_DIR, javaDir);
@@ -723,9 +723,11 @@ int main(int argc, char *argv[]) {
         "jpackage",
         "jps",
         "jrunscript",
+        "jshell",
         "jstack",
         "jstat",
         "jstatd",
+        "jwebserver",
         "keytool",
         "rmiregistry",
         "serialver"
