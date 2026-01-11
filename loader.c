@@ -413,8 +413,6 @@ int run_kotlin(int argc, char *argv[]) {
     snprintf(new_path, sizeof(new_path), "%s:%s", BIN_DIR, old_path ? old_path : "");
     setenv("PATH", new_path, 1);
 
-    printf("Compiling...\n");
-
     char tmpdir_flag[1024];
     snprintf(tmpdir_flag, sizeof(tmpdir_flag), "-Djava.io.tmpdir=%s", tmpDir);
 
@@ -629,52 +627,32 @@ int run_ruby(char *argv[]) {
     return 1;
 }
 
-int run_mono(char *argv[]) {
-    const char *vsdroid_shared_path = getenv("VSDROID_SHARED_PATH");
-    if (!vsdroid_shared_path) {
-        fprintf(stderr, "VSDROID_SHARED_PATH is not set.\n");
-        return 1;
+int run_mcs(int argc, char *argv[]) {
+    if (getenv("PWD")) {
+        chdir(getenv("PWD"));
     }
-
-    char monoDir[256];
-    snprintf(monoDir, sizeof(monoDir), "%s/mono", RUNTIME_DIR);
-
-    struct stat st;
-    if (stat(monoDir, &st) != 0 || !S_ISDIR(st.st_mode)) {
-        not_installed("Mono");
-        return 1;
-    }
-
-    char mono_path[512];
-    snprintf(mono_path, sizeof(mono_path), "%s/mono/mono/4.5", RUNTIME_DIR);
-    setenv("MONO_PATH", mono_path, 1);
-
-    const char *mono_launcher = "libmono.so";
-    char launcher_path[1024];
-    snprintf(launcher_path, sizeof(launcher_path), "%s/%s", vsdroid_shared_path, mono_launcher);
-
-    execv(launcher_path, argv);
-    perror("execv failed");
-    return 1;
-}
-
-int run_csc(int argc, char *argv[]) {
-    char cscPath[512];
-    snprintf(cscPath, sizeof(cscPath), "%s/mono/mono/4.5/csc.exe", RUNTIME_DIR);
-
-    char **args = malloc((argc + 3) * sizeof(char*));
-    if (!args) { perror("malloc"); exit(1); }
     
-    args[0] = strdup("mono");
-    args[1] = strdup("--gc-params=nursery-size=64m");
-    args[2] = strdup(cscPath);
-    
+    char mcsPath[512];
+    snprintf(mcsPath, sizeof(mcsPath), "%s/mono/mono/4.5/mcs.exe", RUNTIME_DIR);
+
+    char **args = calloc(argc + 2, sizeof(char*));
+    if (!args) { perror("calloc failed"); exit(1); }
+
+    args[0] = "mono";
+    args[1] = mcsPath;
+
     for (int i = 1; i < argc; i++) {
-        args[i + 2] = strdup(argv[i]);
+        args[i + 1] = argv[i];
     }
+
+    args[argc + 1] = NULL;
+
+    char gacPath[512];
+    snprintf(gacPath, sizeof(gacPath), "%s/mono/mono/gac", RUNTIME_DIR);
+    setenv("MONO_GAC_PATH", gacPath, 1);
     
-    args[argc + 2] = NULL;
-    
+    setenv("TERM", "dumb", 1);
+
     execvp("mono", args);
     perror("execvp failed");
 
@@ -755,10 +733,8 @@ int main(int argc, char *argv[]) {
         run_clang_plus_plus(argc, argv);
     } else if (strcmp(toolName, "clangloader") == 0) {
         run_clang_loader(argv);
-    } else if (strcmp(toolName, "mono") == 0) {
-        run_mono(argv);
-    } else if (strcmp(toolName, "csc") == 0) {
-        run_csc(argc, argv);
+    } else if (strcmp(toolName, "mcs") == 0) {
+        run_mcs(argc, argv);
     } else if (strcmp(toolName, "git") == 0) {
         run_git(argv);
     } else {
