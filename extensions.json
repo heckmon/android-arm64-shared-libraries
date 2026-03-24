@@ -1,0 +1,63 @@
+"extensions":[
+  {
+    "name": "Github Copilot",
+    "details": "Enable github copilot in the editor.\nNote: Nodejs runtime is required",
+    "archiveName": "copilot-language-server.zip",
+    "parentName": "copilot-language-server",
+    "archiveSize": 12,
+    "url": "https://github.com/heckmon/android-arm64-shared-libraries/releases/download/v0.0.1/copilot-language-server.zip",
+    "fileExtension": [],
+    "serverFile": ["$extensionDir/copilot-language-server/language-server.js"],
+    "icon-url": "assets/icons/github-copilot-icon.svg"
+  },
+  {
+    "name": "Based-Pyright",
+    "details": "Language server for python.\nNote: Node JS runtime is required.",
+    "archiveName": "basedpyright.zip",
+    "parentName": "basedpyright",
+    "archiveSize": 8.4,
+    "url": "https://github.com/heckmon/android-arm64-shared-libraries/releases/download/v0.0.1/basedpyright.zip",
+    "fileExtension": ["py"],
+    "serverFile": ["/data/data/com.vsdroid/extensions/basedpyright/langserver.index.js"],
+    "icon-url": "assets/icons/based_pyright_logo.png"
+  },
+  {
+    "name": "VScode-extracted LSP Servers",
+    "details": "Language servers extracted from VSCode. Contains HTML, CSS, Markdown, JSON and ESLint servers.\nNote: Node JS runtime is required.",
+    "archiveName": "vscode-langservers-extracted.zip",
+    "parentName": "vscode-langservers-extracted",
+    "archiveSize": 14,
+    "url": "https://github.com/heckmon/android-arm64-shared-libraries/releases/download/v0.0.1/vscode-langservers-extracted.zip",
+    "fileExtension": ["html", "css", "md", "json"],
+    "serverFile": [
+      "$extensionDir/vscode-langservers-extracted/node_modules/vscode-langservers-extracted/lib/html-language-server/node/htmlServerMain.js",
+      "$extensionDir/vscode-langservers-extracted/node_modules/vscode-langservers-extracted/lib/css-language-server/node/cssServerMain.js",
+      "$extensionDir/vscode-langservers-extracted/node_modules/vscode-langservers-extracted/lib/json-language-server/node/jsonServerMain.js",
+      "$extensionDir/vscode-langservers-extracted/node_modules/vscode-langservers-extracted/lib/markdown-language-server/node/main.js",
+      "$extensionDir/vscode-langservers-extracted/node_modules/vscode-langservers-extracted/lib/eslint-language-server/eslintServer.js"
+    ],
+    "icon-url": "assets/icons/html-css.png"
+  },
+  {
+    "name": "JDT-LS",
+    "details": "The Eclipse JDT-LS language server for java.\nNote: Open JDK installation is required.",
+    "archiveName": "JDT-LS.zip",
+    "parentName": "JDT-LS",
+    "archiveSize": 47,
+    "url": "https://github.com/heckmon/android-arm64-shared-libraries/releases/download/v0.0.1/JDT-LS.zip",
+    "fileExtension": ["java"],
+    "serverFile": [],
+    "icon-url": "assets/icons/eclipse.svg"
+  },
+  {
+    "name": "bash-language-server",
+    "details": "Language server for bash/shell-script.\nNote: Nodejs runtime is required",
+    "archiveName": "bash-language-server.zip",
+    "parentName": "bash-language-server",
+    "archiveSize": 4,
+    "url": "https://github.com/heckmon/android-arm64-shared-libraries/releases/download/v0.0.1/bash-language-server.zip",
+    "fileExtension": ["sh", "bash", "zsh"],
+    "serverFile": ["$extensionDir/bash-language-server/node_modules/bash-language-server/out/cli.js"],
+    "icon-url": "assets/icons/bash.png"
+  }
+]
