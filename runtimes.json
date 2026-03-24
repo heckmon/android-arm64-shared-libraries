@@ -1,62 +1,64 @@
-"runtimes": [
-  {
-    "name": "Python",
-    "version": "3.13.5",
-    "details": "The python interpreter.\nDownload the based-pyright extension for LSP support.",
-    "url": "https://github.com/heckmon/android-arm64-shared-libraries/releases/download/runtimes/python.zip",
-    "archiveName": "python.zip",
-    "archiveSize": 78,
-    "parentName": "python",
-    "icon-url": "https://raw.githubusercontent.com/material-extensions/vscode-material-icon-theme/f7de1c3273aab253098a717a662f2c0b9482d06e/icons/python.svg"
-  },
-  {
-    "name": "Node JS",
-    "version": "24.4.1",
-    "details": "The node js runtime.\nTypescript runtime and LSP server are included with this bundle.",
-    "url": "https://github.com/heckmon/android-arm64-shared-libraries/releases/download/runtimes/node.zip",
-    "archiveName": "node.zip",
-    "archiveSize": 51,
-    "parentName": "node",
-    "icon-url": "https://raw.githubusercontent.com/material-extensions/vscode-material-icon-theme/f7de1c3273aab253098a717a662f2c0b9482d06e/icons/nodejs.svg"
-  },
-  {
-    "name": "Clang",
-    "version": "21.1.8",
-    "details": "The clang compiler for C/C++. CCLS Language server is included with this bundle",
-    "url": "https://github.com/heckmon/android-arm64-shared-libraries/releases/download/runtimes/clang.zip",
-    "archiveName": "clang.zip",
-    "archiveSize": 86,
-    "parentName": "clang",
-    "icon-url": "https://icon.icepanel.io/Technology/svg/LLVM.svg"
-  },
-  {
-    "name": "OpenJDK",
-    "version": "21",
-    "details": "The Java Virtual Machine.",
-    "url": "https://github.com/heckmon/android-arm64-shared-libraries/releases/download/runtimes/java-21-openjdk.zip",
-    "archiveName": "java-21-openjdk.zip",
-    "archiveSize": 135,
-    "parentName": "java-21-openjdk",
-    "icon-url": "https://icon.icepanel.io/Technology/svg/Java.svg"
-  },
-  {
-    "name": "Kotlin",
-    "version": "2.2.0",
-    "details": "The Kotlin runtime.\nNote: OpenJDK installation is required",
-    "url": "https://github.com/heckmon/android-arm64-shared-libraries/releases/download/runtimes/kotlin.zip",
-    "archiveName": "kotlin.zip",
-    "archiveSize": 74,
-    "parentName": "kotlin",
-    "icon-url": "https://raw.githubusercontent.com/material-extensions/vscode-material-icon-theme/f7de1c3273aab253098a717a662f2c0b9482d06e/icons/kotlin.svg"
-  },
-  {
-    "name": "Ruby",
-    "version": "3.4.1",
-    "details": "The Ruby interpreter.",
-    "url": "https://github.com/heckmon/android-arm64-shared-libraries/releases/download/runtimes/ruby.zip",
-    "archiveName": "ruby.zip",
-    "archiveSize": 12,
-    "parentName": "ruby",
-    "icon-url": "https://raw.githubusercontent.com/material-extensions/vscode-material-icon-theme/f7de1c3273aab253098a717a662f2c0b9482d06e/icons/ruby.svg"
-  }
-]
+{
+  "runtimes": [
+    {
+      "name": "Python",
+      "version": "3.13.5",
+      "details": "The python interpreter.\nDownload the based-pyright extension for LSP support.",
+      "url": "https://github.com/heckmon/android-arm64-shared-libraries/releases/download/runtimes/python.zip",
+      "archiveName": "python.zip",
+      "archiveSize": 78,
+      "parentName": "python",
+      "icon-url": "https://raw.githubusercontent.com/material-extensions/vscode-material-icon-theme/f7de1c3273aab253098a717a662f2c0b9482d06e/icons/python.svg"
+    },
+    {
+      "name": "Node JS",
+      "version": "24.4.1",
+      "details": "The node js runtime.\nTypescript runtime and LSP server are included with this bundle.",
+      "url": "https://github.com/heckmon/android-arm64-shared-libraries/releases/download/runtimes/node.zip",
+      "archiveName": "node.zip",
+      "archiveSize": 51,
+      "parentName": "node",
+      "icon-url": "https://raw.githubusercontent.com/material-extensions/vscode-material-icon-theme/f7de1c3273aab253098a717a662f2c0b9482d06e/icons/nodejs.svg"
+    },
+    {
+      "name": "Clang",
+      "version": "21.1.8",
+      "details": "The clang compiler for C/C++. CCLS Language server is included with this bundle",
+      "url": "https://github.com/heckmon/android-arm64-shared-libraries/releases/download/runtimes/clang.zip",
+      "archiveName": "clang.zip",
+      "archiveSize": 86,
+      "parentName": "clang",
+      "icon-url": "https://icon.icepanel.io/Technology/svg/LLVM.svg"
+    },
+    {
+      "name": "OpenJDK",
+      "version": "21",
+      "details": "The Java Virtual Machine.",
+      "url": "https://github.com/heckmon/android-arm64-shared-libraries/releases/download/runtimes/java-21-openjdk.zip",
+      "archiveName": "java-21-openjdk.zip",
+      "archiveSize": 135,
+      "parentName": "java-21-openjdk",
+      "icon-url": "https://icon.icepanel.io/Technology/svg/Java.svg"
+    },
+    {
+      "name": "Kotlin",
+      "version": "2.2.0",
+      "details": "The Kotlin runtime.\nNote: OpenJDK installation is required",
+      "url": "https://github.com/heckmon/android-arm64-shared-libraries/releases/download/runtimes/kotlin.zip",
+      "archiveName": "kotlin.zip",
+      "archiveSize": 74,
+      "parentName": "kotlin",
+      "icon-url": "https://raw.githubusercontent.com/material-extensions/vscode-material-icon-theme/f7de1c3273aab253098a717a662f2c0b9482d06e/icons/kotlin.svg"
+    },
+    {
+      "name": "Ruby",
+      "version": "3.4.1",
+      "details": "The Ruby interpreter.",
+      "url": "https://github.com/heckmon/android-arm64-shared-libraries/releases/download/runtimes/ruby.zip",
+      "archiveName": "ruby.zip",
+      "archiveSize": 12,
+      "parentName": "ruby",
+      "icon-url": "https://raw.githubusercontent.com/material-extensions/vscode-material-icon-theme/f7de1c3273aab253098a717a662f2c0b9482d06e/icons/ruby.svg"
+    }
+  ]
+}
