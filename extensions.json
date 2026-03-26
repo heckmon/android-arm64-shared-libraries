@@ -8,7 +8,7 @@
       "archiveSize": 12,
       "url": "https://github.com/heckmon/android-arm64-shared-libraries/releases/download/extensions/copilot-language-server.zip",
       "fileExtension": [],
-      "serverFile": ["$extensionDir/copilot-language-server/language-server.js"],
+      "serverFile": ["/data/data/com.roxum/extensions/copilot-language-server/language-server.js"],
       "icon-url": "assets/icons/github-copilot-icon.svg"
     },
     {
@@ -19,7 +19,7 @@
       "archiveSize": 8.4,
       "url": "https://github.com/heckmon/android-arm64-shared-libraries/releases/download/extensions/basedpyright.zip",
       "fileExtension": ["py"],
-      "serverFile": ["/data/data/com.vsdroid/extensions/basedpyright/langserver.index.js"],
+      "serverFile": ["/data/data/com.roxum/extensions/basedpyright/langserver.index.js"],
       "icon-url": "assets/icons/based_pyright_logo.png"
     },
     {
@@ -31,11 +31,11 @@
       "url": "https://github.com/heckmon/android-arm64-shared-libraries/releases/download/extensions/vscode-langservers-extracted.zip",
       "fileExtension": ["html", "css", "md", "json"],
       "serverFile": [
-        "$extensionDir/vscode-langservers-extracted/node_modules/vscode-langservers-extracted/lib/html-language-server/node/htmlServerMain.js",
-        "$extensionDir/vscode-langservers-extracted/node_modules/vscode-langservers-extracted/lib/css-language-server/node/cssServerMain.js",
-        "$extensionDir/vscode-langservers-extracted/node_modules/vscode-langservers-extracted/lib/json-language-server/node/jsonServerMain.js",
-        "$extensionDir/vscode-langservers-extracted/node_modules/vscode-langservers-extracted/lib/markdown-language-server/node/main.js",
-        "$extensionDir/vscode-langservers-extracted/node_modules/vscode-langservers-extracted/lib/eslint-language-server/eslintServer.js"
+        "/data/data/com.roxum/extensions/vscode-langservers-extracted/node_modules/vscode-langservers-extracted/lib/html-language-server/node/htmlServerMain.js",
+        "/data/data/com.roxum/extensions/vscode-langservers-extracted/node_modules/vscode-langservers-extracted/lib/css-language-server/node/cssServerMain.js",
+        "/data/data/com.roxum/extensions/vscode-langservers-extracted/node_modules/vscode-langservers-extracted/lib/json-language-server/node/jsonServerMain.js",
+        "/data/data/com.roxum/extensions/vscode-langservers-extracted/node_modules/vscode-langservers-extracted/lib/markdown-language-server/node/main.js",
+        "/data/data/com.roxum/extensions/vscode-langservers-extracted/node_modules/vscode-langservers-extracted/lib/eslint-language-server/eslintServer.js"
       ],
       "icon-url": "assets/icons/html-css.png"
     },
@@ -58,7 +58,7 @@
       "archiveSize": 4,
       "url": "https://github.com/heckmon/android-arm64-shared-libraries/releases/download/extensions/bash-language-server.zip",
       "fileExtension": ["sh", "bash", "zsh"],
-      "serverFile": ["$extensionDir/bash-language-server/node_modules/bash-language-server/out/cli.js"],
+      "serverFile": ["/data/data/com.roxum/extensions/bash-language-server/node_modules/bash-language-server/out/cli.js"],
       "icon-url": "assets/icons/bash.png"
     }
   ]

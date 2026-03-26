@@ -6,12 +6,12 @@
 #include <sys/stat.h>
 #include <pwd.h>
 
-#define RUNTIME_DIR "/data/data/com.vsdroid/runtimes"
-#define BIN_DIR "/data/data/com.vsdroid/bin"
+#define RUNTIME_DIR "/data/data/com.roxum/runtimes"
+#define BIN_DIR "/data/data/com.roxum/bin"
 
 void not_installed(char* package){
     char message[512];
-    snprintf(message, sizeof(message), "%s is not installed. Go to the download page and install it first\n\nOr install it by running: vsd install %s", package, package);
+    snprintf(message, sizeof(message), "%s is not installed. Go to the download page and install it first", package);
     fprintf(stderr, "%s\n", message);
 }
 
@@ -36,14 +36,14 @@ int run_python(char *argv[]){
     snprintf(path, sizeof(path), "%s/python/bin:%s", RUNTIME_DIR, old_path ? old_path : "");
     setenv("PATH", path, 1);
 
-    const char *vsdroid_shared_path = getenv("VSDROID_SHARED_PATH");
-    if (!vsdroid_shared_path) {
-        fprintf(stderr, "VSDROID_SHARED_PATH is not set.\n");
+    const char *roxum_shared_path = getenv("ROXUM_SHARED_PATH");
+    if (!roxum_shared_path) {
+        fprintf(stderr, "ROXUM_SHARED_PATH is not set.\n");
         return 1;
     }
 
     char launcher_path[1024];
-    snprintf(launcher_path, sizeof(launcher_path), "%s/libpythonlauncher.so", vsdroid_shared_path);
+    snprintf(launcher_path, sizeof(launcher_path), "%s/libpythonlauncher.so", roxum_shared_path);
 
     execv(launcher_path, argv);
 
@@ -52,9 +52,9 @@ int run_python(char *argv[]){
 }
 
 int run_node(char *argv[]) {
-    const char *vsdroid_shared_path = getenv("VSDROID_SHARED_PATH");
-    if (!vsdroid_shared_path) {
-        fprintf(stderr, "VSDROID_SHARED_PATH is not set");
+    const char *roxum_shared_path = getenv("ROXUM_SHARED_PATH");
+    if (!roxum_shared_path) {
+        fprintf(stderr, "ROXUM_SHARED_PATH is not set");
         return 1;
     }
 
@@ -68,7 +68,7 @@ int run_node(char *argv[]) {
     }
 
     char ld_library_path[512];
-    snprintf(ld_library_path, sizeof(ld_library_path), "%s/node/lib:%s", RUNTIME_DIR, vsdroid_shared_path);
+    snprintf(ld_library_path, sizeof(ld_library_path), "%s/node/lib:%s", RUNTIME_DIR, roxum_shared_path);
     setenv("LD_LIBRARY_PATH", ld_library_path, 1);
 
     char node_options[1024];
@@ -76,7 +76,7 @@ int run_node(char *argv[]) {
     setenv("NODE_OPTIONS", node_options, 1);
 
     char launcher_path[1024];
-    snprintf(launcher_path, sizeof(launcher_path), "%s/libnodelauncher.so", vsdroid_shared_path);
+    snprintf(launcher_path, sizeof(launcher_path), "%s/libnodelauncher.so", roxum_shared_path);
 
     execv(launcher_path, argv);
 
@@ -89,9 +89,9 @@ int run_clang(int argc, char *argv[]) {
     char clangDir[256];
     snprintf(clangDir, sizeof(clangDir), "%s/clang", RUNTIME_DIR);
 
-    const char *vsdroid_shared_path = getenv("VSDROID_SHARED_PATH");
-    if (!vsdroid_shared_path) {
-        fprintf(stderr, "VSDROID_SHARED_PATH is not set.\n");
+    const char *roxum_shared_path = getenv("ROXUM_SHARED_PATH");
+    if (!roxum_shared_path) {
+        fprintf(stderr, "ROXUM_SHARED_PATH is not set.\n");
         return 1;
     }
 
@@ -103,7 +103,7 @@ int run_clang(int argc, char *argv[]) {
 
     char link[1024], target[1024];
     snprintf(link, sizeof(link), "%s/clang/ld.lld", RUNTIME_DIR);
-    snprintf(target, sizeof(target), "%s/liblld.so", vsdroid_shared_path);
+    snprintf(target, sizeof(target), "%s/liblld.so", roxum_shared_path);
 
     remove(link);
 
@@ -130,7 +130,7 @@ int run_clang(int argc, char *argv[]) {
     setenv("CPLUS_INCLUDE_PATH", cPlusIncludePath, 1);
 
     char launcher_path[1024];
-    snprintf(launcher_path, sizeof(launcher_path), "%s/libclang-21.so", vsdroid_shared_path);
+    snprintf(launcher_path, sizeof(launcher_path), "%s/libclang-21.so", roxum_shared_path);
     
     int arg_count = argc + 4;
     char** args = (char**)malloc((arg_count + 1) * sizeof(char*));
@@ -168,9 +168,9 @@ int run_clang_plus_plus(int argc, char *argv[]) {
     char clangDir[256];
     snprintf(clangDir, sizeof(clangDir), "%s/clang", RUNTIME_DIR);
 
-    const char *vsdroid_shared_path = getenv("VSDROID_SHARED_PATH");
-    if (!vsdroid_shared_path) {
-        fprintf(stderr, "VSDROID_SHARED_PATH is not set.\n");
+    const char *roxum_shared_path = getenv("ROXUM_SHARED_PATH");
+    if (!roxum_shared_path) {
+        fprintf(stderr, "ROXUM_SHARED_PATH is not set.\n");
         return 1;
     }
 
@@ -207,7 +207,7 @@ int run_clang_plus_plus(int argc, char *argv[]) {
 
     char link[1024], target[1024];
     snprintf(link, sizeof(link), "%s/clang/ld.lld", RUNTIME_DIR);
-    snprintf(target, sizeof(target), "%s/liblld.so", vsdroid_shared_path);
+    snprintf(target, sizeof(target), "%s/liblld.so", roxum_shared_path);
 
     remove(link);
     if (symlink(target, link) == -1) {
@@ -237,7 +237,7 @@ int run_clang_plus_plus(int argc, char *argv[]) {
     setenv("CPLUS_INCLUDE_PATH", cplus_include_path, 1);
 
     char launcher_path[1024];
-    snprintf(launcher_path, sizeof(launcher_path), "%s/libclang-21.so", vsdroid_shared_path);
+    snprintf(launcher_path, sizeof(launcher_path), "%s/libclang-21.so", roxum_shared_path);
 
     int total_args = argc + 9;
     char **args = (char **)malloc((total_args + 1) * sizeof(char *));
@@ -281,9 +281,9 @@ int run_clang_loader(char *argv[]) {
     char clangDir[256];
     snprintf(clangDir, sizeof(clangDir), "%s/clang", RUNTIME_DIR);
 
-    const char *vsdroid_shared_path = getenv("VSDROID_SHARED_PATH");
-    if (!vsdroid_shared_path) {
-        fprintf(stderr, "VSDROID_SHARED_PATH is not set.\n");
+    const char *roxum_shared_path = getenv("ROXUM_SHARED_PATH");
+    if (!roxum_shared_path) {
+        fprintf(stderr, "ROXUM_SHARED_PATH is not set.\n");
         return 1;
     }
 
@@ -298,14 +298,14 @@ int run_clang_loader(char *argv[]) {
     setenv("LD_LIBRARY_PATH", ld_library_path, 1);
 
     char clang_loader_path[1024];
-    snprintf(clang_loader_path, sizeof(clang_loader_path), "%s/libclangloader.so", vsdroid_shared_path);
+    snprintf(clang_loader_path, sizeof(clang_loader_path), "%s/libclangloader.so", roxum_shared_path);
 
     execv(clang_loader_path, argv);
     return 1;
 }
 
 int run_npm_or_npx(char *argv[], int argc, int isNpx) {
-    const char *vsdroid_shared_path = getenv("VSDROID_SHARED_PATH");
+    const char *roxum_shared_path = getenv("ROXUM_SHARED_PATH");
     char npmPrefix[512];
     snprintf(npmPrefix, sizeof(npmPrefix), "%s/node", RUNTIME_DIR);
 
@@ -366,7 +366,7 @@ int run_npm_or_npx(char *argv[], int argc, int isNpx) {
 }
 
 int run_kotlin(int argc, char *argv[]) {
-    const char *runtimeDir = "/data/data/com.vsdroid/runtimes";
+    const char *runtimeDir = "/data/data/com.roxum/runtimes";
     const char *javaDir = "java-17-openjdk";
     const char *kotlinDir = "kotlin";
 
@@ -462,9 +462,9 @@ int run_java_tool(const char *tool, char *argv[]) {
         return 1;
     }
 
-    const char *vsdroid_shared_path = getenv("VSDROID_SHARED_PATH");
-    if (!vsdroid_shared_path) {
-        fprintf(stderr, "VSDROID_SHARED_PATH is not set.\n");
+    const char *roxum_shared_path = getenv("ROXUM_SHARED_PATH");
+    if (!roxum_shared_path) {
+        fprintf(stderr, "ROXUM_SHARED_PATH is not set.\n");
         return 1;
     }
 
@@ -477,7 +477,7 @@ int run_java_tool(const char *tool, char *argv[]) {
     setenv("JAVA_HOME", fullJavaDir, 1);
 
     char toolPath[1024];
-    snprintf(toolPath, sizeof(toolPath), "%s/lib%s.so", vsdroid_shared_path, tool);
+    snprintf(toolPath, sizeof(toolPath), "%s/lib%s.so", roxum_shared_path, tool);
 
     execv(toolPath, argv);
 
@@ -489,9 +489,9 @@ int run_pip(char *argv[], int argc) {
     char pythonDir[512];
     snprintf(pythonDir, sizeof(pythonDir), "%s/python", RUNTIME_DIR);
 
-    const char *vsdroid_shared_path = getenv("VSDROID_SHARED_PATH");
-    if (!vsdroid_shared_path) {
-        fprintf(stderr, "VSDROID_SHARED_PATH is not set.\n");
+    const char *roxum_shared_path = getenv("ROXUM_SHARED_PATH");
+    if (!roxum_shared_path) {
+        fprintf(stderr, "ROXUM_SHARED_PATH is not set.\n");
         return 1;
     }
 
@@ -557,8 +557,8 @@ int run_pip(char *argv[], int argc) {
 }
 
 int run_tsc(int argc, char *argv[]) {
-    const char *tsDir = "/data/data/com.vsdroid/runtimes/node/lib/node_modules";
-    const char *binPath = "/data/data/com.vsdroid/bin";
+    const char *tsDir = "/data/data/com.roxum/runtimes/node/lib/node_modules";
+    const char *binPath = "/data/data/com.roxum/bin";
     char tscPath[512];
     snprintf(tscPath, sizeof(tscPath), "%s/typescript/lib/tsc.js", tsDir);
 
@@ -590,9 +590,9 @@ int run_tsc(int argc, char *argv[]) {
 }
 
 int run_ruby(char *argv[]) {
-    const char *vsdroid_shared_path = getenv("VSDROID_SHARED_PATH");
-    if (!vsdroid_shared_path) {
-        fprintf(stderr, "VSDROID_SHARED_PATH is not set.\n");
+    const char *roxum_shared_path = getenv("ROXUM_SHARED_PATH");
+    if (!roxum_shared_path) {
+        fprintf(stderr, "ROXUM_SHARED_PATH is not set.\n");
         return 1;
     }
 
@@ -606,7 +606,7 @@ int run_ruby(char *argv[]) {
     }
 
     char ld_library_path[512];
-    snprintf(ld_library_path, sizeof(ld_library_path), "%s/ruby:%s", RUNTIME_DIR, vsdroid_shared_path);
+    snprintf(ld_library_path, sizeof(ld_library_path), "%s/ruby:%s", RUNTIME_DIR, roxum_shared_path);
     setenv("LD_LIBRARY_PATH", ld_library_path, 1);
 
     char ruby_lib[512];
@@ -620,7 +620,7 @@ int run_ruby(char *argv[]) {
 
     const char *ruby_launcher = "libruby.so";
     char launcher_path[1024];
-    snprintf(launcher_path, sizeof(launcher_path), "%s/%s", vsdroid_shared_path, ruby_launcher);
+    snprintf(launcher_path, sizeof(launcher_path), "%s/%s", roxum_shared_path, ruby_launcher);
 
     execv(launcher_path, argv);
     perror("execv failed");
@@ -664,13 +664,13 @@ int run_mcs(int argc, char *argv[]) {
 }
 
 int run_git(char *argv[]){
-    const char *vsdroid_shared_path = getenv("VSDROID_SHARED_PATH");
-    if (!vsdroid_shared_path) {
-        fprintf(stderr, "VSDROID_SHARED_PATH is not set.\n");
+    const char *roxum_shared_path = getenv("ROXUM_SHARED_PATH");
+    if (!roxum_shared_path) {
+        fprintf(stderr, "ROXUM_SHARED_PATH is not set.\n");
         return 1;
     }
     char launcher_path[1024];
-    snprintf(launcher_path, sizeof(launcher_path), "%s/libgit.so", vsdroid_shared_path);
+    snprintf(launcher_path, sizeof(launcher_path), "%s/libgit.so", roxum_shared_path);
 
     execv(launcher_path, argv);
     return 1;
