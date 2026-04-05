@@ -5,9 +5,33 @@
 #include <libgen.h>
 #include <sys/stat.h>
 #include <pwd.h>
+#include <sys/types.h>
 
 #define RUNTIME_DIR "/data/data/com.roxum/runtimes"
 #define BIN_DIR "/data/data/com.roxum/bin"
+#define LIB_DIR "/data/data/com.roxum/lib"
+
+void set_common_env(){
+  const char *roxum_shared_path = getenv("ROXUM_SHARED_PATH");
+    const char *old_ld = getenv("LD_LIBRARY_PATH");
+    char ld_path[2048];
+
+    if (roxum_shared_path && roxum_shared_path[0] != '\0') {
+        if (old_ld && old_ld[0] != '\0') {
+            snprintf(ld_path, sizeof(ld_path), "%s:%s:%s", roxum_shared_path, LIB_DIR, old_ld);
+        } else {
+            snprintf(ld_path, sizeof(ld_path), "%s:%s", roxum_shared_path, LIB_DIR);
+        }
+    } else {
+        if (old_ld && old_ld[0] != '\0') {
+            snprintf(ld_path, sizeof(ld_path), "%s:%s", LIB_DIR, old_ld);
+        } else {
+            snprintf(ld_path, sizeof(ld_path), "%s", LIB_DIR);
+        }
+    }
+
+  setenv("LD_LIBRARY_PATH", ld_path, 1);
+}
 
 void not_installed(char* package){
     char message[512];
@@ -23,24 +47,39 @@ int run_python(char *argv[]){
         not_installed("Python");
         return 1;
     }
-    char ld_library_path[512];
-    snprintf(ld_library_path, sizeof(ld_library_path), "%s/python/lib", RUNTIME_DIR);
-    setenv("LD_LIBRARY_PATH", ld_library_path, 1);
-
-    char pythonhome[512];
-    snprintf(pythonhome, sizeof(pythonhome), "%s/python", RUNTIME_DIR);
-    setenv("PYTHONHOME", pythonhome, 1);
-
-    char path[1024];
-    const char *old_path = getenv("PATH");
-    snprintf(path, sizeof(path), "%s/python/bin:%s", RUNTIME_DIR, old_path ? old_path : "");
-    setenv("PATH", path, 1);
-
+    
     const char *roxum_shared_path = getenv("ROXUM_SHARED_PATH");
     if (!roxum_shared_path) {
         fprintf(stderr, "ROXUM_SHARED_PATH is not set.\n");
         return 1;
     }
+    
+    set_common_env();
+
+    const char *python_old_ld = getenv("LD_LIBRARY_PATH");
+    char python_ld[2048];
+    snprintf(
+        python_ld,
+        sizeof(python_ld),
+        "%s/python/lib:%s/python/lib/python3.13/lib-dynload:%s",
+        RUNTIME_DIR,
+        RUNTIME_DIR,
+        python_old_ld ? python_old_ld : ""
+    );
+    setenv("LD_LIBRARY_PATH", python_ld, 1);
+
+    char pythonhome[512];
+    snprintf(pythonhome, sizeof(pythonhome), "%s/python", RUNTIME_DIR);
+    setenv("PYTHONHOME", pythonhome, 1);
+    
+    char pythonpath[512];
+    snprintf(pythonpath, sizeof(pythonpath), "%s/python/lib", RUNTIME_DIR);
+    setenv("PYTHONPATH", pythonpath, 1);
+
+    char path[1024];
+    const char *old_path = getenv("PATH");
+    snprintf(path, sizeof(path), "%s/python/bin:%s", RUNTIME_DIR, old_path ? old_path : "");
+    setenv("PATH", path, 1);
 
     char launcher_path[1024];
     snprintf(launcher_path, sizeof(launcher_path), "%s/libpythonlauncher.so", roxum_shared_path);
@@ -67,9 +106,18 @@ int run_node(char *argv[]) {
         return 1;
     }
 
-    char ld_library_path[512];
-    snprintf(ld_library_path, sizeof(ld_library_path), "%s/node/lib:%s", RUNTIME_DIR, roxum_shared_path);
-    setenv("LD_LIBRARY_PATH", ld_library_path, 1);
+    set_common_env();
+
+    const char *node_old_ld = getenv("LD_LIBRARY_PATH");
+    char node_ld[2048];
+    snprintf(
+        node_ld,
+        sizeof(node_ld),
+        "%s/node/lib:%s",
+        RUNTIME_DIR,
+        node_old_ld ? node_old_ld : ""
+    );
+    setenv("LD_LIBRARY_PATH", node_ld, 1);
 
     char node_options[1024];
     snprintf(node_options, sizeof(node_options), "--require %s/node/error_handler.js", RUNTIME_DIR);
@@ -117,8 +165,10 @@ int run_clang(int argc, char *argv[]) {
     snprintf(new_path, sizeof(new_path), "%s/clang:%s", RUNTIME_DIR, old_path ? old_path : "");
     setenv("PATH", new_path, 1);
 
-    char ld_library_path[512];
-    snprintf(ld_library_path, sizeof(ld_library_path), "%s/clang", RUNTIME_DIR);
+    const char* old_ld_path = getenv("LD_LIBRARY_PATH");
+    
+    char ld_library_path[1024];
+    snprintf(ld_library_path, sizeof(ld_library_path),"%s:%s/clang:%s/clang/lib/clang/21/lib/linux", old_ld_path, RUNTIME_DIR, RUNTIME_DIR);
     setenv("LD_LIBRARY_PATH", ld_library_path, 1);
 
     char cIncludePath[512];
@@ -219,8 +269,10 @@ int run_clang_plus_plus(int argc, char *argv[]) {
     snprintf(new_path, sizeof(new_path), "%s/clang:%s", RUNTIME_DIR, old_path ? old_path : "");
     setenv("PATH", new_path, 1);
 
+    const char* old_ld_path = getenv("LD_LIBRARY_PATH");
+    
     char ld_library_path[1024];
-    snprintf(ld_library_path, sizeof(ld_library_path),"%s/clang:%s/clang/lib/clang/21/lib/linux", RUNTIME_DIR, RUNTIME_DIR);
+    snprintf(ld_library_path, sizeof(ld_library_path),"%s:%s/clang:%s/clang/lib/clang/21/lib/linux", old_ld_path, RUNTIME_DIR, RUNTIME_DIR);
     setenv("LD_LIBRARY_PATH", ld_library_path, 1);
 
     char c_include_path[1024];
@@ -292,9 +344,13 @@ int run_clang_loader(char *argv[]) {
         not_installed("Clang");
         return 1;
     }
-
+    
+    set_common_env();
+    
+    const char* old_ld_path = getenv("LD_LIBRARY_PATH");
+    
     char ld_library_path[1024];
-    snprintf(ld_library_path, sizeof(ld_library_path),"%s/clang/lib/clang/21/lib/linux:%s/clang", RUNTIME_DIR, RUNTIME_DIR);
+    snprintf(ld_library_path, sizeof(ld_library_path),"%s:%s/clang/lib/clang/21/lib/linux:%s/clang", old_ld_path, RUNTIME_DIR, RUNTIME_DIR);
     setenv("LD_LIBRARY_PATH", ld_library_path, 1);
 
     char clang_loader_path[1024];
@@ -381,6 +437,14 @@ int run_kotlin(int argc, char *argv[]) {
         not_installed("Kotlin");
         return 1;
     }
+    
+    const char *roxum_shared_path = getenv("ROXUM_SHARED_PATH");
+    if (!roxum_shared_path) {
+        fprintf(stderr, "ROXUM_SHARED_PATH is not set.\n");
+        return 1;
+    }
+    
+    set_common_env();
 
     char tmpDir[1024];
     snprintf(tmpDir, sizeof(tmpDir), "%s/tmp", fullKotlinDir);
@@ -467,6 +531,8 @@ int run_java_tool(const char *tool, char *argv[]) {
         fprintf(stderr, "ROXUM_SHARED_PATH is not set.\n");
         return 1;
     }
+    
+    set_common_env();
 
     char ld_path[1024];
     snprintf(ld_path, sizeof(ld_path), "%s/lib", fullJavaDir);
@@ -502,9 +568,7 @@ int run_pip(char *argv[], int argc) {
     if (stat(pip3Path, &st) != 0) {
         printf("Installing pip...\n");
 
-        char ld_path[1024];
-        snprintf(ld_path, sizeof(ld_path), "%s/lib", pythonDir);
-        setenv("LD_LIBRARY_PATH", ld_path, 1);
+        set_common_env();
         setenv("PYTHONHOME", pythonDir, 1);
         char bin_path[1024];
         snprintf(bin_path, sizeof(bin_path), "%s/bin", pythonDir);
@@ -521,9 +585,7 @@ int run_pip(char *argv[], int argc) {
         return 1;
     }
 
-    char ld_path[1024];
-    snprintf(ld_path, sizeof(ld_path), "%s/lib", pythonDir);
-    setenv("LD_LIBRARY_PATH", ld_path, 1);
+    set_common_env();
     setenv("PYTHONHOME", pythonDir, 1);
     char bin_path[1024];
     snprintf(bin_path, sizeof(bin_path), "%s/bin", pythonDir);
@@ -605,9 +667,7 @@ int run_ruby(char *argv[]) {
         return 1;
     }
 
-    char ld_library_path[512];
-    snprintf(ld_library_path, sizeof(ld_library_path), "%s/ruby:%s", RUNTIME_DIR, roxum_shared_path);
-    setenv("LD_LIBRARY_PATH", ld_library_path, 1);
+    set_common_env();
 
     char ruby_lib[512];
     snprintf(ruby_lib, sizeof(ruby_lib), "%s/ruby/lib/ruby/3.4.0:%s/ruby/lib/ruby/3.4.0/aarch64-linux-android", RUNTIME_DIR, RUNTIME_DIR);
@@ -682,7 +742,7 @@ int main(int argc, char *argv[]) {
     const char* javaTools[]= {
         "jar",
         "jarsigner",
-        "java",
+        "javaloader",
         "javac",
         "javadoc",
         "javap",
@@ -693,7 +753,6 @@ int main(int argc, char *argv[]) {
         "jdeps",
         "jfr",
         "jhsdb",
-        "jimage",
         "jinfo",
         "jlink",
         "jmap",
@@ -737,6 +796,8 @@ int main(int argc, char *argv[]) {
         run_mcs(argc, argv);
     } else if (strcmp(toolName, "git") == 0) {
         run_git(argv);
+    } else if (strcmp(toolName, "java") == 0) {
+        run_java_tool("javaloader", argv);
     } else {
         for(int i = 0; i < sizeof(javaTools) / sizeof(javaTools[0]); i++) {
             if (strcmp(toolName, javaTools[i]) == 0) {
