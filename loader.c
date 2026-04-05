@@ -651,6 +651,83 @@ int run_tsc(int argc, char *argv[]) {
     return 1;
 }
 
+int run_dart(char *argv[]){
+    const char *roxum_shared_path = getenv("ROXUM_SHARED_PATH");
+    if (!roxum_shared_path) {
+        fprintf(stderr, "ROXUM_SHARED_PATH is not set.\n");
+        return 1;
+    }
+    
+    char dartDir[256];
+    snprintf(dartDir, sizeof(dartDir), "%s/dart", RUNTIME_DIR);
+
+    struct stat st;
+    if (stat(dartDir, &st) != 0 || !S_ISDIR(st.st_mode)) {
+        not_installed("Dart");
+        return 1;
+    }
+
+    set_common_env();
+
+    setenv("DART_ROOT", dartDir, 1);
+    
+    const char *old_path = getenv("PATH");
+    
+    char bin_path[1024];
+    snprintf(bin_path, sizeof(bin_path), "%s/bin:%s", dartDir, old_path ? old_path : "");
+    setenv("PATH", bin_path, 1);
+    
+    char dart_path[1024];
+    snprintf(dart_path, sizeof(dart_path), "%s/bin/dart", dartDir);
+
+    int argc = 0;
+    while (argv[argc] != NULL) {
+        argc++;
+    }
+
+    int use_language_server_sdk = 0;
+    if (argc > 1 && strcmp(argv[1], "language-server") == 0) {
+        int has_sdk_arg = 0;
+        for (int i = 2; i < argc; i++) {
+            if (strncmp(argv[i], "--sdk=", 6) == 0) {
+                has_sdk_arg = 1;
+                break;
+            }
+        }
+        if (!has_sdk_arg) {
+            use_language_server_sdk = 1;
+        }
+    }
+
+    char sdk_arg[768];
+    if (use_language_server_sdk) {
+        snprintf(sdk_arg, sizeof(sdk_arg), "--sdk=%s", dartDir);
+    }
+
+    int out_argc = argc + (use_language_server_sdk ? 1 : 0);
+    char **dart_argv = (char **)calloc((size_t)out_argc + 1, sizeof(char *));
+    if (!dart_argv) {
+        perror("calloc failed");
+        return 1;
+    }
+
+    dart_argv[0] = dart_path;
+    for (int i = 1; i < argc; i++) {
+        dart_argv[i] = argv[i];
+    }
+    if (use_language_server_sdk) {
+        dart_argv[argc] = sdk_arg;
+    }
+    dart_argv[out_argc] = NULL;
+    
+    execv(dart_path, dart_argv);
+    perror("execv failed");
+
+    free(dart_argv);
+    
+    return 1;
+}
+
 int run_ruby(char *argv[]) {
     const char *roxum_shared_path = getenv("ROXUM_SHARED_PATH");
     if (!roxum_shared_path) {
@@ -794,6 +871,8 @@ int main(int argc, char *argv[]) {
         run_clang_loader(argv);
     } else if (strcmp(toolName, "mcs") == 0) {
         run_mcs(argc, argv);
+    } else if (strcmp(toolName, "dart") == 0) {
+        run_dart(argv);
     } else if (strcmp(toolName, "git") == 0) {
         run_git(argv);
     } else if (strcmp(toolName, "java") == 0) {
