@@ -166,9 +166,16 @@ int run_clang(int argc, char *argv[]) {
     setenv("PATH", new_path, 1);
 
     const char* old_ld_path = getenv("LD_LIBRARY_PATH");
-    
+
     char ld_library_path[1024];
-    snprintf(ld_library_path, sizeof(ld_library_path),"%s:%s/clang:%s/clang/lib/clang/21/lib/linux", old_ld_path, RUNTIME_DIR, RUNTIME_DIR);
+    snprintf(
+        ld_library_path,
+        sizeof(ld_library_path),
+        "%s/clang:%s/clang/lib/clang/21/lib/linux:%s",
+        RUNTIME_DIR,
+        RUNTIME_DIR,
+        old_ld_path ? old_ld_path : ""
+    );
     setenv("LD_LIBRARY_PATH", ld_library_path, 1);
 
     char cIncludePath[512];
@@ -182,33 +189,47 @@ int run_clang(int argc, char *argv[]) {
     char launcher_path[1024];
     snprintf(launcher_path, sizeof(launcher_path), "%s/libclang-21.so", roxum_shared_path);
     
-    int arg_count = argc + 4;
-    char** args = (char**)malloc((arg_count + 1) * sizeof(char*));
-    
-    args[arg_count] = NULL;
-    
-    args[0] = strdup(launcher_path);
-    args[1] = "-fuse-ld=lld";
-    char arg2[512], arg3[512], arg4[512];
-    snprintf(arg2, sizeof(arg2), "-L%s/clang/lib/clang/21/lib/linux", RUNTIME_DIR);
-    snprintf(arg3, sizeof(arg3), "-B%s/clang/lib/clang/21/lib/linux", RUNTIME_DIR);
-    snprintf(arg4, sizeof(arg4), "-resource-dir=%s/clang/lib/clang/21", RUNTIME_DIR);
-
-    args[2] = strdup(arg2);
-    args[3] = strdup(arg3);
-    args[4] = strdup(arg4);
-    
-    for(int i=1; i < argc; i++){
-        args[4 + i] = argv[i];
+    int is_link_step = 1;
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "-c") == 0 || strcmp(argv[i], "-S") == 0 || strcmp(argv[i], "-E") == 0) {
+            is_link_step = 0;
+            break;
+        }
     }
+
+    int injected_args = is_link_step ? 4 : 1;
+    int total_args = argc + injected_args;
+    char **args = (char **)malloc((size_t)(total_args + 1) * sizeof(char *));
+
+    if (!args) {
+        perror("malloc");
+        return 1;
+    }
+
+    int idx = 0;
+    args[idx++] = launcher_path;
+
+    char arg_linker[512], arg_libpath[512], arg_bindir[512], arg_resource[512];
+    snprintf(arg_linker, sizeof(arg_linker), "-fuse-ld=lld");
+    snprintf(arg_libpath, sizeof(arg_libpath), "-L%s/clang/lib/clang/21/lib/linux", RUNTIME_DIR);
+    snprintf(arg_bindir, sizeof(arg_bindir), "-B%s/clang/lib/clang/21/lib/linux", RUNTIME_DIR);
+    snprintf(arg_resource, sizeof(arg_resource), "-resource-dir=%s/clang/lib/clang/21", RUNTIME_DIR);
+
+    if (is_link_step) {
+        args[idx++] = arg_linker;
+        args[idx++] = arg_libpath;
+        args[idx++] = arg_bindir;
+    }
+    args[idx++] = arg_resource;
+
+    for (int i = 1; i < argc; i++) {
+        args[idx++] = argv[i];
+    }
+    args[idx] = NULL;
 
     execv(launcher_path, args);
 
     perror("execv failed");
-
-    for (int i = 0; i < arg_count; i++) {
-        free(args[i]);
-    }
     free(args);
 
     return 1;
@@ -728,6 +749,146 @@ int run_dart(char *argv[]){
     return 1;
 }
 
+int run_rust(char *argv[]) {
+    const char *roxum_shared_path = getenv("ROXUM_SHARED_PATH");
+    if (!roxum_shared_path) {
+        fprintf(stderr, "ROXUM_SHARED_PATH is not set.\n");
+        return 1;
+    }
+    
+    char rustDir[256];
+    snprintf(rustDir, sizeof(rustDir), "%s/rust", RUNTIME_DIR);
+    
+    struct stat st;
+    if (stat(rustDir, &st) != 0 || !S_ISDIR(st.st_mode)) {
+        not_installed("Rust");
+        return 1;
+    }
+    
+    set_common_env();
+    
+    setenv("RUSTFLAGS", "--sysroot /data/data/com.roxum/runtimes/rust", 1);
+    
+    char rustpath[1024];
+    snprintf(rustpath, sizeof(rustpath), "%s/librustc.so", roxum_shared_path);
+    execv(rustpath, argv);
+    
+    return 1;
+}
+
+int run_rust_loader(char *argv[]) {
+    const char *roxum_shared_path = getenv("ROXUM_SHARED_PATH");
+    if (!roxum_shared_path) {
+        fprintf(stderr, "ROXUM_SHARED_PATH is not set.\n");
+        return 1;
+    }
+    
+    char rustDir[256];
+    snprintf(rustDir, sizeof(rustDir), "%s/rust", RUNTIME_DIR);
+    
+    struct stat st;
+    if (stat(rustDir, &st) != 0 || !S_ISDIR(st.st_mode)) {
+        not_installed("Rust");
+        return 1;
+    }
+    
+    set_common_env();
+    
+    setenv("RUSTFLAGS", "--sysroot /data/data/com.roxum/runtimes/rust", 1);
+    
+    char rustpath[1024];
+    snprintf(rustpath, sizeof(rustpath), "%s/rustloader", BIN_DIR);
+    execv(rustpath, argv);
+    
+    return 1;
+}
+
+int run_cargo(char *argv[]){
+    const char *roxum_shared_path = getenv("ROXUM_SHARED_PATH");
+    if (!roxum_shared_path) {
+        fprintf(stderr, "ROXUM_SHARED_PATH is not set.\n");
+        return 1;
+    }
+
+    char rustDir[256];
+    snprintf(rustDir, sizeof(rustDir), "%s/rust", RUNTIME_DIR);
+    
+    struct stat st;
+    if (stat(rustDir, &st) != 0 || !S_ISDIR(st.st_mode)) {
+        not_installed("Rust");
+        return 1;
+    }
+    
+    set_common_env();
+    
+    setenv("RUSTFLAGS", "--sysroot /data/data/com.roxum/runtimes/rust", 1);
+    setenv("RUSTC", "/data/data/com.roxum/bin/rustc", 1);
+ 
+    char cargo_path[256];
+    snprintf(cargo_path, sizeof(cargo_path), "%s/libcargo.so", roxum_shared_path);
+    
+    execv(cargo_path, argv);
+    
+    return 1;
+}
+
+int run_go(char *argv[], int goFmt) {
+    const char *roxum_shared_path = getenv("ROXUM_SHARED_PATH");
+    if (!roxum_shared_path) {
+        fprintf(stderr, "ROXUM_SHARED_PATH is not set.\n");
+        return 1;
+    }
+
+    char goDir[256];
+    snprintf(goDir, sizeof(goDir), "%s/go", RUNTIME_DIR);
+    
+    struct stat st;
+    if (stat(goDir, &st) != 0 || !S_ISDIR(st.st_mode)) {
+        not_installed("Go");
+        return 1;
+    }
+    
+    setenv("GOROOT", goDir, 1);
+    
+    char goExec[256];
+    if(goFmt){
+        snprintf(goExec, sizeof(goExec), "%s/libgofmt.so", roxum_shared_path);
+    } else {
+        snprintf(goExec, sizeof(goExec), "%s/libgo.so", roxum_shared_path);
+    }
+    
+    execv(goDir, argv);
+    
+    return 1;
+}
+
+int run_lua (char *argv[], int isCompiler) {
+    char luaDir[256];
+    snprintf(luaDir, sizeof(luaDir), "%s/lua", RUNTIME_DIR);
+    
+    struct stat st;
+    if (stat(luaDir, &st) != 0 || !S_ISDIR(st.st_mode)) {
+        not_installed("Lua");
+        return 1;
+    }
+    
+    char pathDir[512];
+    snprintf(pathDir, sizeof(pathDir), "%s/bin", luaDir);
+    setenv("PATH", pathDir, 1);
+    
+    if(!isCompiler){
+        char intpath[256];
+        snprintf(intpath, sizeof(intpath), "%s/lua", pathDir);
+        execv(intpath, argv);
+    } else {
+        char cmppath[256];
+        snprintf(cmppath, sizeof(cmppath), "%s/luac", pathDir);
+        execv(cmppath, argv);
+    }
+    
+    return 1;
+}
+
 int run_ruby(char *argv[]) {
     const char *roxum_shared_path = getenv("ROXUM_SHARED_PATH");
     if (!roxum_shared_path) {
@@ -755,7 +916,7 @@ int run_ruby(char *argv[]) {
     setenv("GEM_PATH", gem_path, 1);
     setenv("GEM_HOME", gem_path, 1);
 
-    const char *ruby_launcher = "libruby.so";
+    const char *ruby_launcher = "librubyloader.so";
     char launcher_path[1024];
     snprintf(launcher_path, sizeof(launcher_path), "%s/%s", roxum_shared_path, ruby_launcher);
 
@@ -849,6 +1010,16 @@ int main(int argc, char *argv[]) {
 
     if (strcmp(toolName, "node") == 0) {
         run_node(argv);
+    } else if (strcmp(toolName, "rustc") == 0) {
+        run_rust(argv);
+    } else if (strcmp(toolName, "rustloader") == 0) {
+        run_rust_loader(argv);
+    } else if (strcmp(toolName, "cargo") == 0) {
+        run_cargo(argv);
+    } else if (strcmp(toolName, "go") == 0) {
+        run_go(argv, 0);
+    } else if (strcmp(toolName, "gofmt") == 0) {
+        run_go(argv, 1);
     } else if (strcmp(toolName, "tsc") == 0) {
         run_tsc(argc, argv);
     } else if (strcmp(toolName, "npm") == 0) {
@@ -863,6 +1034,19 @@ int main(int argc, char *argv[]) {
         run_kotlin(argc, argv);
     } else if (strcmp(toolName, "ruby") == 0) {
         run_ruby(argv);
+    } else if (strcmp(toolName, "gem") == 0) {
+        int new_argc = argc + 1;
+        char **gargs = (char **)malloc((new_argc + 1) * sizeof(char *));
+        if (!gargs) { perror("malloc"); return 1; }
+        gargs[0] = "ruby";
+        gargs[1] = "/data/data/com.roxum/runtimes/ruby/gemrunner.rb";
+        for (int i = 1; i < argc; i++) {
+            gargs[i + 1] = argv[i];
+        }
+        gargs[new_argc] = NULL;
+        int ret = run_ruby(gargs);
+        free(gargs);
+        return ret;
     } else if (strcmp(toolName, "clang") == 0) {
         run_clang(argc, argv);
     } else if (strcmp(toolName, "clang++") == 0) {
@@ -875,6 +1059,10 @@ int main(int argc, char *argv[]) {
         run_dart(argv);
     } else if (strcmp(toolName, "git") == 0) {
         run_git(argv);
+    } else if (strcmp(toolName, "lua") == 0) {
+        run_lua(argv, 0);
+    } else if (strcmp(toolName, "luac") == 0) {
+        run_lua(argv, 1);
     } else if (strcmp(toolName, "java") == 0) {
         run_java_tool("javaloader", argv);
     } else {
