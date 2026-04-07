@@ -857,7 +857,7 @@ int run_go(char *argv[], int goFmt) {
         snprintf(goExec, sizeof(goExec), "%s/libgo.so", roxum_shared_path);
     }
     
-    execv(goDir, argv);
+    execv(goExec, argv);
     
     return 1;
 }
