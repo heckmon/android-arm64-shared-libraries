@@ -8,7 +8,7 @@
       "archiveName": "python.zip",
       "archiveSize": 78,
       "parentName": "python",
-      "icon-url": "assets/materia_icons/python.svg"
+      "icon-url": "assets/material_icons/python.svg"
     },
     {
       "name": "Node JS",
@@ -48,7 +48,7 @@
       "archiveName": "kotlin.zip",
       "archiveSize": 74,
       "parentName": "kotlin",
-      "icon-url": "assets/materia_icons/kotlin.svg"
+      "icon-url": "assets/material_icons/kotlin.svg"
     },
     {
       "name": "Ruby",
@@ -58,7 +58,7 @@
       "archiveName": "ruby.zip",
       "archiveSize": 12,
       "parentName": "ruby",
-      "icon-url": "assets/materia_icons/ruby.svg"
+      "icon-url": "assets/material_icons/ruby.svg"
     }
   ]
 }
